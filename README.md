@@ -8,7 +8,7 @@ An automated document metadata ingestion and indexing pipeline built using Googl
 graph LR
     User[User Upload] -->|GCS| GCS[(Cloud Storage)]
     GCS -->|Trigger| Eventarc[Eventarc GCS Trigger]
-    Eventarc -->|HTTP POST| CloudRun[Cloud Run (Flask)]
+    Eventarc -->|HTTP POST| CloudRun["Cloud Run (Flask)"]
     CloudRun -->|Download| GCS
     CloudRun -->|OCR Mock & Insert| BigQuery[(BigQuery)]
 ```
