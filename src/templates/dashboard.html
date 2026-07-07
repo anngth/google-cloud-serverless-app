@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipeline Document Indexer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #080810;
+            --accent-primary: #8a2be2;
+            --accent-secondary: #00f2fe;
+            --accent-glow: rgba(138, 43, 226, 0.4);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-main: #ffffff;
+            --text-muted: #9ba1b4;
+            --tag-bg: rgba(138, 43, 226, 0.15);
+            --tag-border: rgba(138, 43, 226, 0.3);
+            --tag-color: #c084fc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 242, 254, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            margin-bottom: 50px;
+            text-align: center;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #ffffff 40%, #a855f7 70%, #00f2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Dashboard controls: Search and Filter */
+        .controls-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .filter-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .tag-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+        }
+
+        .chip:hover {
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .chip.active {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, #6366f1 100%);
+            border-color: transparent;
+            color: #ffffff;
+            box-shadow: 0 0 15px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Documents Table Card */
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .table-header {
+            padding: 24px 30px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .counter-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 18px 30px;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        td {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.95rem;
+            vertical-align: middle;
+            transition: background 0.3s ease;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .filename-cell {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .date-cell {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .count-cell {
+            font-family: monospace;
+            font-size: 1.05rem;
+            color: var(--accent-secondary);
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .table-tag {
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            color: var(--tag-color);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            padding: 60px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            stroke: var(--text-muted);
+            opacity: 0.5;
+            margin-bottom: 16px;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            td, th {
+                padding: 16px 20px;
+            }
+            .controls-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Processed Documents</h1>
+            <p>Serverless event-driven document parsing pipeline metrics</p>
+        </header>
+
+        <div class="controls-card">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by filename or tag...">
+            </div>
+            <div class="filter-label">Filter by Tag</div>
+            <div class="tag-chips" id="tagChips">
+                <span class="chip active" data-tag="all">All Tags</span>
+                {% for tag in unique_tags %}
+                    <span class="chip" data-tag="{{ tag }}">{{ tag }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">
+                <span class="table-title">Catalog Matrix</span>
+                <span class="counter-badge" id="visibleCounter">Showing {{ documents|length }} documents</span>
+            </div>
+            
+            <div class="table-container">
+                <table id="documentsTable">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Upload Date</th>
+                            <th>Word Count</th>
+                            <th>Extracted Tags</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if documents|length > 0 %}
+                            {% for doc in documents %}
+                                <tr class="document-row" data-tags="{{ doc.tags }}">
+                                    <td class="filename-cell" title="{{ doc.filename }}">{{ doc.filename }}</td>
+                                    <td class="date-cell">{{ doc.upload_time }}</td>
+                                    <td class="count-cell">{{ doc.word_count }}</td>
+                                    <td>
+                                        <div class="tags-container">
+                                            {% if doc.tags %}
+                                                {% for tag in doc.tags.split(',') %}
+                                                    <span class="table-tag">{{ tag.strip() }}</span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="table-tag" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: var(--text-muted)">None</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr id="emptyRow">
+                                <td colspan="4">
+                                    <div class="empty-state">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                                            <polyline points="10 9 9 9 8 9"></polyline>
+                                        </svg>
+                                        <p>No documents found in the database.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            const chips = document.querySelectorAll('#tagChips .chip');
+            const rows = document.querySelectorAll('.document-row');
+            const visibleCounter = document.getElementById('visibleCounter');
+            const tableBody = document.querySelector('#documentsTable tbody');
+
+            let activeTag = 'all';
+            let searchQuery = '';
+
+            // Handle tag chip filtering
+            chips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    chips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    activeTag = chip.getAttribute('data-tag').toLowerCase();
+                    filterTable();
+                });
+            });
+
+            // Handle search filtering
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase().trim();
+                filterTable();
+            });
+
+            function filterTable() {
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const filename = row.querySelector('.filename-cell').textContent.toLowerCase();
+                    const tagsStr = row.getAttribute('data-tags').toLowerCase();
+                    const tagsArray = tagsStr.split(',').map(t => t.trim());
+
+                    // Check Tag condition
+                    const matchesTag = (activeTag === 'all') || tagsArray.includes(activeTag);
+
+                    // Check Search condition
+                    const matchesSearch = filename.includes(searchQuery) || tagsStr.includes(searchQuery);
+
+                    if (matchesTag && matchesSearch) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update counter
+                visibleCounter.textContent = `Showing ${visibleCount} document${visibleCount !== 1 ? 's' : ''}`;
+
+                // Handle no results state
+                const emptyRow = document.getElementById('noResultsRow');
+                if (visibleCount === 0 && rows.length > 0) {
+                    if (!emptyRow) {
+                        const tr = document.createElement('tr');
+                        tr.id = 'noResultsRow';
+                        tr.innerHTML = `
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <p>No documents match your filter query.</p>
+                                </div>
+                            </td>
+                        `;
+                        tableBody.appendChild(tr);
+                    }
+                } else if (emptyRow) {
+                    emptyRow.remove();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

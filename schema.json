@@ -1,0 +1,26 @@
+[
+  {
+    "name": "filename",
+    "type": "STRING",
+    "mode": "REQUIRED",
+    "description": "The name of the processed file"
+  },
+  {
+    "name": "upload_time",
+    "type": "TIMESTAMP",
+    "mode": "REQUIRED",
+    "description": "The timestamp when the file was processed/uploaded"
+  },
+  {
+    "name": "word_count",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "The number of words in the document"
+  },
+  {
+    "name": "tags",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Comma-separated list of extracted keyword tags"
+  }
+]
